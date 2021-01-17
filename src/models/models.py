@@ -3,6 +3,7 @@ import torch
 from torch.functional import  F
 import numpy as np
 from utils import  torch_utils
+
 def conv_bn(inp, oup, stride = 1):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
@@ -74,7 +75,7 @@ class SSH(nn.Module):
 class FPN(nn.Module):
     def __init__(self,in_channels_list,out_channels,light_mode = False):
         super(FPN,self).__init__()
-
+        print(in_channels_list)
         self.output1 = conv_bn1X1(in_channels_list[0], out_channels, stride = 1)
         self.output2 = conv_bn1X1(in_channels_list[1], out_channels, stride = 1)
         self.output3 = conv_bn1X1(in_channels_list[2], out_channels, stride = 1)

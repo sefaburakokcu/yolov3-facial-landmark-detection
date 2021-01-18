@@ -1,10 +1,10 @@
 import sys
 sys.path.insert(0,'..')
-from nn import *
+from models import *
 import torch
 from utils.torch_utils import select_device
 from hyp import  hyp
-from torchstat import stat
+#from torchstat import stat
 
 
 point_num = hyp['point_num']
@@ -12,7 +12,7 @@ point_num = hyp['point_num']
 device = select_device('cpu')
 
 
-net_type = "mbv3_large_75"
+net_type = "mbv3_small_1"
 
 assert net_type in ['mbv3_small_1','mbv3_small_75','mbv3_large_1','mbv3_large_75',
                     "mbv3_large_75_light", "mbv3_large_1_light",'mbv3_small_75_light','mbv3_small_1_light',
@@ -38,7 +38,7 @@ else:
 net.eval()
 
 
-print(stat(net, (3, 320, 240)))
+#print(stat(net, (3, 320, 240)))
 
 #
  ##################export###############

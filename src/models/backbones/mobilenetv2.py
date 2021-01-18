@@ -1,10 +1,12 @@
 '''Implementation of Mobilenetv2 is taken from
 https://github.com/pytorch/vision/blob/master/torchvision/models/mobilenetv2.py
+and modified for yolov3 compability.
 '''
 
 from torch import nn
 from torch import Tensor
 from typing import Callable, Any, Optional, List
+from collections import OrderedDict
 
 try:
     from torch.hub import load_state_dict_from_url
@@ -170,10 +172,10 @@ class MobileNetV2(nn.Module):
                 stride = s if i == 0 else 1
                 features.append(block(input_channel, output_channel, stride, expand_ratio=t, norm_layer=norm_layer))
                 input_channel = output_channel
-                if id in self.feat_id:
-                    self.__setattr__("feature_%d" % id, nn.Sequential(*features))
-                    self.feat_channel.append(output_channel)
-                    features = []
+            if id in self.feat_id:
+                self.__setattr__("feature_%d" % id, nn.Sequential(*features))
+                self.feat_channel.append(output_channel)
+                features = []
                 
         # building last several layers
         # features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1, norm_layer=norm_layer))
@@ -218,7 +220,17 @@ class MobileNetV2(nn.Module):
             y.append(x)
         return y
 
-
+def load_model(model,state_dict):
+    new_model=model.state_dict()
+    new_keys = list(new_model.keys())
+    old_keys = list(state_dict.keys())
+    restore_dict = OrderedDict()
+    for id in range(len(new_keys)):
+        restore_dict[new_keys[id]] = state_dict[old_keys[id]]
+    res = model.load_state_dict(restore_dict)
+    print(res)
+    
+    
 def mobilenet_v2(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> MobileNetV2:
     """
     Constructs a MobileNetV2 architecture from
@@ -232,5 +244,6 @@ def mobilenet_v2(pretrained: bool = False, progress: bool = True, **kwargs: Any)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'],
                                               progress=progress)
-        model.load_state_dict(state_dict)
+#        model.load_state_dict(state_dict)
+        load_model(model, state_dict)
     return model

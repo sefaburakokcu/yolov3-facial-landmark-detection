@@ -327,7 +327,7 @@ def train(hyp):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=250)  # 500200 batches at bs 16, 117263 COCO images = 273 epochs
-    parser.add_argument('--batch-size', type=int, default=16)  # effective bs = batch_size * accumulate = 16 * 4 = 64
+    parser.add_argument('--batch-size', type=int, default=8)  # effective bs = batch_size * accumulate = 16 * 4 = 64
     parser.add_argument('--net', type=str, default='mbv2_1', help='net')
     parser.add_argument('--train_path', type=str, default='/Users/Sefaburak/Downloads/yololandmark_wider_train/', help='*.txt path')
     # parser.add_argument('--train_path', type=str, default='./data/wider_landmark98_yolo_train.txt', help='*.txt path')

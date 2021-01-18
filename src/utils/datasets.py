@@ -36,7 +36,7 @@ def exif_size(img):
         pass
 
     return s
-
+    
 
 class LoadImagesAndLabels(Dataset):  # for training/testing
     def __init__(self, path, img_size=416, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,

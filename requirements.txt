@@ -11,5 +11,4 @@ torchstat==0.0.7
 Cython==0.26.1
 ipython==7.15.0
 Pillow==7.1.2
-pretrainedmodels==0.7.4
 scikit-image==0.16.2

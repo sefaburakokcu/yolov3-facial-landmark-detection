@@ -20,22 +20,28 @@ from utils.inference_datasets import LoadImages, LoadWebcam
 def get_model(net_type, weights, device):
     assert net_type in ['mbv3_small_1', 'mbv3_small_75', 'mbv3_large_1', 'mbv3_large_75',
                    "mbv3_large_75_light", "mbv3_large_1_light", 'mbv3_small_75_light', 'mbv3_small_1_light',
+                   "mbv2_1", "mbv2_75",
                    ]
+    
     if net_type.startswith("mbv3_small_1"):
-        backone = mobilenetv3_small()
+        backbone = mobilenetv3_small()
     elif net_type.startswith("mbv3_small_75"):
-        backone = mobilenetv3_small( width_mult=0.75)
+        backbone = mobilenetv3_small( width_mult=0.75)
     elif net_type.startswith("mbv3_large_1"):
-        backone = mobilenetv3_large()
+        backbone = mobilenetv3_large()
     elif net_type.startswith("mbv3_large_75"):
-        backone = mobilenetv3_large( width_mult=0.75)
+        backbone = mobilenetv3_large( width_mult=0.75)
     elif net_type.startswith("mbv3_large_f"):
-        backone = mobilenetv3_large_full()
+        backbone = mobilenetv3_large_full()
+    elif opt.net.startswith("mbv2_1"):
+        backbone = mobilenet_v2(pretrained=False, width_mult = 1.0)
+    elif opt.net.startswith("mbv2_75"):
+        backbone = mobilenet_v2(pretrained=False, width_mult = 0.75)        
 
     if 'light' in net_type:
-        net = DarknetWithShh(backone, hyp, light_head=True).to(device)
+        net = DarknetWithShh(backbone, hyp, light_head=True).to(device)
     else:
-        net = DarknetWithShh(backone, hyp).to(device)
+        net = DarknetWithShh(backbone, hyp).to(device)
         
     net.load_state_dict(torch.load(weights, map_location=device)['model'])
     net.eval()
@@ -133,8 +139,8 @@ def run_inference():
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net', type=str, default='mbv3_small_1', help='net')
-    parser.add_argument('--weights', type=str, default='../weights/mbv3_small_1_final.pt', help='initial weights path')
+    parser.add_argument('--net', type=str, default='mbv2_1', help='net')
+    parser.add_argument('--weights', type=str, default='../weights/mbv2_1_last.pt', help='initial weights path')
     parser.add_argument('--input', type=str, default='../data/inputs/images/', help='a image folder or a video or webcam')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')

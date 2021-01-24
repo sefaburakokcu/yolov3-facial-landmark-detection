@@ -10,7 +10,7 @@ from utils.datasets import *
 from utils.utils import *
 from hyp import  hyp
 
-wdir = 'weights'
+
 # Print focal loss if gamma > 0
 if hyp['fl_gamma']:
     print('Using FocalLoss(gamma=%g)' % hyp['fl_gamma'])
@@ -50,7 +50,7 @@ def train(hyp):
 
 
 
-    best = wdir + 'best.pt'
+    best = wdir + '/{}_best.pt'.format(opt.net)
     results_file = 'results.txt'
 
     # Remove previous results
@@ -198,6 +198,7 @@ def train(hyp):
 
     # torch.autograd.set_detect_anomaly(True)
     results = (0, 0, 0, 0, 0, 0, 0)  # 'P', 'R', 'mAP', 'F1', 'val GIoU', 'val Objectness', 'val Classification'
+    best_total_loss = np.inf
     t0 = time.time()
     print('Image sizes %g - %g train, %g test' % (imgsz_min, imgsz_max, imgsz_test))
     print('Using %g dataloader workers' % nw)
@@ -208,7 +209,7 @@ def train(hyp):
 
         mloss = torch.zeros(5).to(device)  # mean losses
         print(('\n' + '%10s' * 10) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls','land' , 'total', 'targets', 'img_size','lr'))
-        pbar = tqdm(enumerate(dataloader), total=nb , ncols = 50)  # progress bar
+        pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device).float() / 255.0
@@ -229,7 +230,7 @@ def train(hyp):
 
             # Multi-Scale
             if opt.multi_scale:
-                if ni / accumulate % 1 == 0:  #  adjust img_size (67% - 150%) every 1 batch
+                if ni / accumulate % 1 == 0:  #  adjust img_size (67% - 150%) every 1 batch
                     img_size = random.randrange(grid_min, grid_max + 1) * gs
                 sf = img_size / max(imgs.shape[2:])  # scale factor
                 if sf != 1:
@@ -315,9 +316,15 @@ def train(hyp):
                  'optimizer': None if final_epoch else optimizer.state_dict()}
 
         # Save last, best and delete
-        torch.save(chkpt, "../{}/{}_last.pt".format(wdir,opt.net))
+        torch.save(chkpt, "{}/{}_last.pt".format(wdir, opt.net))
+        
+        total_loss = mloss.cpu().numpy().sum()
+        if total_loss < best_total_loss:
+            torch.save(chkpt, "{}/{}_best.pt".format(wdir, opt.net))
+        
+        
         if  final_epoch:
-            torch.save(chkpt, "../{}/{}_final.pt".format(wdir,opt.net))
+            torch.save(chkpt, "{}/{}_final.pt".format(wdir,opt.net))
 
         del chkpt
 
@@ -328,10 +335,10 @@ def train(hyp):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=250)  # 500200 batches at bs 16, 117263 COCO images = 273 epochs
-    parser.add_argument('--batch-size', type=int, default=4)  # effective bs = batch_size * accumulate = 16 * 4 = 64
+    parser.add_argument('--epochs', type=int, default=250)  
+    parser.add_argument('--batch-size', type=int, default=8)  # effective bs = batch_size * accumulate = 16 * 4 = 64
     parser.add_argument('--net', type=str, default='darknet53', help='net')
-    parser.add_argument('--train_path', type=str, default='/Users/Sefaburak/Downloads/yololandmark_wider_train/', help='*.txt path')
+    parser.add_argument('--train_path', type=str, default='/home/sefa/data/widerface/train/yololandmark_wider_train/', help='*.txt path')
     # parser.add_argument('--train_path', type=str, default='./data/wider_landmark98_yolo_train.txt', help='*.txt path')
     parser.add_argument('--multi-scale', action='store_true', help='adjust (67%% - 150%%) img_size every 10 batches')
     parser.add_argument('--img-size', nargs='+', type=int, default=[320, 640], help='[min_train, max-train, test]')
@@ -342,18 +349,21 @@ if __name__ == '__main__':
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
-    parser.add_argument('--weights', type=str, default='', help='initial weights path')
+    parser.add_argument('--weights', type=str, default='../weights/mbv2_1_last', help='initial weights path')
     parser.add_argument('--backbone_weights', type=str, default='../pretrained/mobilenetv3-small-0.75-86c972c3.pth', help='initial backbone_weights path')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
     parser.add_argument('--device', default='0', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
     opt = parser.parse_args()
+    
+    wdir = "/".join((opt.weights).split("/")[:-1])
+    
     last = wdir + '/{}_last.pt'.format(opt.net)
     opt.weights = last if opt.resume else opt.weights
     check_git_status()
 
-    print(opt)
+    
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
     device = torch_utils.select_device(opt.device, batch_size=opt.batch_size)
     if device.type == 'cpu':
@@ -363,7 +373,8 @@ if __name__ == '__main__':
     # hyp['obj'] *= opt.img_size[0] / 320.
 
     tb_writer = None
-
+    
+    print(opt)
     print('Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/')
     tb_writer = SummaryWriter(comment=opt.name)
     train(hyp)  # train normally

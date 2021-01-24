@@ -1,6 +1,6 @@
 '''The code is retrieved from
 https://github.com/ouyanghuiyu/yolo-face-with-landmark/blob/master/src/retinaface2yololandmark.py
-and refactored for better uage and visualization.
+and refactored for better usage and visualization.
 
 '''
 
@@ -81,7 +81,7 @@ def save_widerface_yolo(words, imgs_path, save_labels_folder):
                 
 if __name__ == '__main__':
     input_labels_path = "/home/sefa/data/widerface/train/label.txt"
-    save_labels_folder = "/home/sefa/data/widerface/train/yololandmark_wider_train1/"
+    save_labels_folder = "/home/sefa/data/widerface/train/yololandmark_wider_train/"
     
     if not os.path.exists(save_labels_folder):
         os.makedirs(save_labels_folder)

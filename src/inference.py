@@ -1,4 +1,4 @@
-
+import os
 import cv2
 import glob
 import random
@@ -119,6 +119,8 @@ def run_inference():
     
             # Save results (image with detections)
             if opt.save_img:
+                if not os.path.exists(opt.save_dir):
+                    os.mkdir(opt.save_dir)
                 if dataset.mode == 'image':
                     cv2.imwrite(save_path, im0)
                 else:  # 'video'
@@ -139,8 +141,8 @@ def run_inference():
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net', type=str, default='mbv2_1', help='net')
-    parser.add_argument('--weights', type=str, default='../weights/mbv2_1_last.pt', help='initial weights path')
+    parser.add_argument('--net', type=str, default='mbv2_75', help='net')
+    parser.add_argument('--weights', type=str, default='../weights/mbv2_75_best.pt', help='initial weights path')
     parser.add_argument('--input', type=str, default='../data/inputs/images/', help='a image folder or a video or webcam')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')

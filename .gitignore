@@ -1,6 +1,7 @@
 __pycache__/
 src/.ipynb_checkpoints/
 runs/
+build/
 data/dataset/widerface/
 outputs/widerface_results/*/
 *.pth

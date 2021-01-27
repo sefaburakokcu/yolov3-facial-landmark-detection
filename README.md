@@ -1,6 +1,10 @@
 # Yolov3-facial-landmark-detection
 
-This repository contains files for training, testing and inference Yolov3 for multi-task face detection and facial landmarks extraction.
+This repository contains files for training and testing Yolov3 for multi-task face detection and facial landmarks extraction.
+
+![Example Output](https://github.com/sefaburakokcu/yolov3-facial-landmark-detection/blob/main/outputs/extra/2_Demonstration_Demonstration_Or_Protest_2_58.jpg)
+
+**P.S.** A jupyter-notebbok for all parts can be found [here](https://github.com/sefaburakokcu/yolov3-facial-landmark-detection/blob/main/src/yolov3_main.ipynb)
 
 ## Installation
 
@@ -45,7 +49,7 @@ python inference.py
 
 ## Tests
 
-1. In order to evaluate the models, first download Widerface Validation dataset from [Widerface Website](http://shuoyang1213.me/WIDERFACE/) and WFLW dataset from [WFLW Website](https://wywu.github.io/projects/LAB/WFLW.html) or [Google drive](https://drive.google.com/file/d/1dtFIHkMc9H-9NjbRvqSsbc0bzDFlkdia/view?usp=sharing). 
+1. In order to evaluate the models, first download Widerface Validation dataset from [Widerface Website](http://shuoyang1213.me/WIDERFACE/) and WFLW dataset from [WFLW Website](https://wywu.github.io/projects/LAB/WFLW.html) or [Google Drive](https://drive.google.com/file/d/1dtFIHkMc9H-9NjbRvqSsbc0bzDFlkdia/view?usp=sharing). 
 
 2. Then, under *src* run,
 
@@ -74,10 +78,10 @@ Average Precision is used as a performance metric.
 
 | Models  | Easy | Medium | Hard |
 | ------------- | ------------- | ------------- | ------------- |
-| Mobilenetv2(0.75)[  | 0.85 | 0.83  | 0.63 |
+| Mobilenetv2(0.75)  | 0.85 | 0.83  | 0.63 |
 | Mobilenetv2(1.0)  | 0.87  | 0.86  | 0.69  |
-| Retinaface(Mobilenetv2(0.25))  | 0.90  | 0.87  | 0.67 |
-| Retinaface(Resnet50)  | 0.93  | 0.91  | 0.69 |
+| [Retinaface(Mobilenetv2(0.25))](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFace)  | 0.90  | 0.87  | 0.67 |
+| [Retinaface(Resnet50)](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFace)  | 0.93  | 0.91  | 0.69 |
 | MTCNN  | 0.79  | 0.76  | 0.50  |
 
 
@@ -88,10 +92,10 @@ Average Root Mean Square Error(RMSE) is chosen as a performance metric.
 
 | Models  | RMSE |
 | ------------- | ------------- |
-| Mobilenetv2(0.75)[  | 6.53 |
+| Mobilenetv2(0.75)  | 6.53 |
 | Mobilenetv2(1.0)  | 4.36  | 
-| Retinaface(Mobilenetv2(0.25))  | 4.03  | 
-| Retinaface(Resnet50)  | 0.93  | 3.22  |
+| [Retinaface(Mobilenetv2(0.25))](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFace)  | 4.03  | 
+| [Retinaface(Resnet50)](https://github.com/deepinsight/insightface/tree/master/detection/RetinaFace)  | 0.93  | 3.22  |
 | MTCNN  | 4.5  |
 
 

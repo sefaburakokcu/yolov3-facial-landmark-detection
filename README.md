@@ -4,7 +4,7 @@ This repository contains files for training and testing Yolov3 for multi-task fa
 
 ![Example Output](https://github.com/sefaburakokcu/yolov3-facial-landmark-detection/blob/main/outputs/extra/2_Demonstration_Demonstration_Or_Protest_2_58.jpg)
 
-**P.S.** A jupyter-notebbok for all parts can be found [here](https://github.com/sefaburakokcu/yolov3-facial-landmark-detection/blob/main/src/yolov3_main.ipynb)
+**P.S.** A jupyter-notebook for all parts can be found [here](https://github.com/sefaburakokcu/yolov3-facial-landmark-detection/blob/main/src/yolov3_main.ipynb).
 
 ## Installation
 
@@ -29,7 +29,7 @@ pip install -r requirements.txt
 python widerface_yolo_format.py
 ```
 
-Or downlaod Widerface tarining dataset in YOLO format directly from [Google Drive](https://drive.google.com/file/d/1VYxoZetzbvLysGbUYbAMTF5FepXocjDj/view?usp=sharing).
+Or downlaod Widerface training dataset in YOLO format directly from [Google Drive](https://drive.google.com/file/d/1VYxoZetzbvLysGbUYbAMTF5FepXocjDj/view?usp=sharing) and put *images* folder under *data/datasets/widerface/*.
 
 2. Under *src* folder, run
 
@@ -40,6 +40,7 @@ python train.py
 ## Inference
 
 For inference, pretrained weights can be used. Pretrained weights can be download from [Google Drive](https://drive.google.com/file/d/1_gVszd6i7LtiaTTiOj_zef91Qz-ehGDE/view?usp=sharing).
+After downloading weigts, put all weights in *weights* folder under project main folder.
 
 Under *src* folder, run
 
@@ -49,7 +50,7 @@ python inference.py
 
 ## Tests
 
-1. In order to evaluate the models, first download Widerface Validation dataset from [Widerface Website](http://shuoyang1213.me/WIDERFACE/) and WFLW dataset from [WFLW Website](https://wywu.github.io/projects/LAB/WFLW.html) or [Google Drive](https://drive.google.com/file/d/1dtFIHkMc9H-9NjbRvqSsbc0bzDFlkdia/view?usp=sharing). 
+1. In order to evaluate the models, first download Widerface Validation dataset from [Widerface Website](http://shuoyang1213.me/WIDERFACE/) and WFLW dataset from [WFLW Website](https://wywu.github.io/projects/LAB/WFLW.html) or [Google Drive](https://drive.google.com/file/d/1dtFIHkMc9H-9NjbRvqSsbc0bzDFlkdia/view?usp=sharing) and put it under *data/datasets/wflw/*. 
 
 2. Then, under *src* run,
 

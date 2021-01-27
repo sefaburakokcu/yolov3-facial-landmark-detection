@@ -1,0 +1,1 @@
+/home/sefa/data/WIDER_face/retinaface_gt_v1.1/train/label.txt

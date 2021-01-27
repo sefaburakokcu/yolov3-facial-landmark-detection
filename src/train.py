@@ -1,5 +1,4 @@
 import argparse
-
 import torch.distributed as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
@@ -11,10 +10,6 @@ from utils.utils import *
 from hyp import  hyp
 
 
-# Print focal loss if gamma > 0
-if hyp['fl_gamma']:
-    print('Using FocalLoss(gamma=%g)' % hyp['fl_gamma'])
-
 
 def train(hyp):
     assert opt.net in ['mbv3_small_1', 'mbv3_small_75', 'mbv3_large_1', 'mbv3_large_75',
@@ -23,7 +18,7 @@ def train(hyp):
                       ]
 
 
-    epochs = opt.epochs  # 500200 batches at bs 64, 117263 images = 273 epochs
+    epochs = opt.epochs  
     batch_size = opt.batch_size
     accumulate = max(round(64 / batch_size), 1)  # accumulate n times before optimizer update (bs 64)
     weights = opt.weights  # initial training weights
@@ -48,8 +43,6 @@ def train(hyp):
 
     train_path = opt.train_path
 
-
-
     best = wdir + '/{}_best.pt'.format(opt.net)
     results_file = 'results.txt'
 
@@ -58,8 +51,6 @@ def train(hyp):
         os.remove(f)
 
     # Initialize model
-
-
     if opt.net.startswith("mbv3_small_1"):
         backbone = mobilenetv3_small(backbone_weights)
     elif opt.net.startswith("mbv3_small_75"):
@@ -130,25 +121,12 @@ def train(hyp):
         del chkpt
 
 
-    # Mixed precision training https://github.com/NVIDIA/apex
-
-
     # Scheduler https://arxiv.org/pdf/1812.01187.pdf
     lf = lambda x: (((1 + math.cos(x * math.pi / epochs)) / 2) ** 1.0) * 0.95 + 0.05  # cosine
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
     scheduler.last_epoch = start_epoch - 1  # see link below
     # https://discuss.pytorch.org/t/a-problem-occured-when-resuming-an-optimizer/28822
 
-    # Plot lr schedule
-    # y = []
-    # for _ in range(epochs):
-    #     scheduler.step()
-    #     y.append(optimizer.param_groups[0]['lr'])
-    # plt.plot(y, '.-', label='LambdaLR')
-    # plt.xlabel('epoch')
-    # plt.ylabel('LR')
-    # plt.tight_layout()
-    # plt.savefig('LR.png', dpi=300)
 
     # Initialize distributed training
     if device.type != 'cpu' and torch.cuda.device_count() > 1 and torch.distributed.is_available():
@@ -180,14 +158,9 @@ def train(hyp):
                                              pin_memory=True,
                                              collate_fn=dataset.collate_fn)
 
-    # Testloader
-
-
     # Model parameters
-
     model.hyp = hyp  # attach hyperparameters to model
     model.gr = 1.0  # giou loss ratio (obj_loss = 1.0 or giou)
-
 
     # Model EMA
     ema = torch_utils.ModelEMA(model)
@@ -203,14 +176,13 @@ def train(hyp):
     print('Image sizes %g - %g train, %g test' % (imgsz_min, imgsz_max, imgsz_test))
     print('Using %g dataloader workers' % nw)
     print('Starting training for %g epochs...' % epochs)
-    for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
+    for epoch in range(start_epoch, epochs): 
         model.train()
-
 
         mloss = torch.zeros(5).to(device)  # mean losses
         print(('\n' + '%10s' * 10) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls','land' , 'total', 'targets', 'img_size','lr'))
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
-        for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
+        for i, (imgs, targets, paths, _) in pbar:  
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device).float() / 255.0
 
@@ -240,32 +212,6 @@ def train(hyp):
             # Forward
             pred = model(imgs)
 
-            #deBug
-            # img = imgs[0].cpu().numpy()
-            # img = np.swapaxes(img,0,2)
-            # img = np.swapaxes(img,0,1)
-            # img *= 255
-            #
-            # labels = targets.cpu().numpy()
-            # # print(labels)
-            # labels = labels[labels[:,0] == 0 ]
-            # # print("\n",labels)
-            # #
-            # img = np.ascontiguousarray(img)
-            # img_h,img_w,_ = img.shape
-            #
-            # for label in labels:
-            #     label = label[1:]
-            #     cx,cy,w,h = label[1:5]
-            #     x1,y1,x2,y2 = cx - w/2,cy-h/2,cx+w/2,cy+h/2
-            #     box = [int(x1*img_w),int(y1*img_h),int(x2*img_w),int(y2*img_h)]
-            #
-            #     cv2.rectangle(img,(box[0],box[1]),(box[2],box[3]),(0,255,0))
-            #     for i in range(hyp["point_num"]):
-            #         cv2.circle(img, (int(label[5+i*2]*img_w), int(label[5+i*2+1]*img_h)), 1, (0, 0, 255), 4)
-            #
-            # cv2.imwrite("debug_imgs/{}.jpg".format(ni), img)
-
             # Loss
             loss, loss_items = compute_loss(pred, targets, model,point_number=hyp['point_num'])
             if not torch.isfinite(loss):
@@ -290,9 +236,6 @@ def train(hyp):
             s = ('%10s' * 2 + '%10.3g' * 7 + "%10.5g") % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size,scheduler.get_lr()[0])
             pbar.set_description(s)
 
-
-            # end batch ------------------------------------------------------------------------------------------------
-
         # Update scheduler
         scheduler.step()
 
@@ -300,14 +243,12 @@ def train(hyp):
         ema.update_attr(model)
         final_epoch = epoch + 1 == epochs
 
-
         # Tensorboard
         if tb_writer:
             tags = ['train/giou_loss', 'train/obj_loss', 'train/cls_loss',
                     'train/land_loss', ]
             for x, tag in zip(list(mloss[:-1]) , tags):
                 tb_writer.add_scalar(tag, x, epoch)
-
 
 
         chkpt = {'epoch': epoch,
@@ -322,22 +263,18 @@ def train(hyp):
         if total_loss < best_total_loss:
             torch.save(chkpt, "{}/{}_best.pt".format(wdir, opt.net))
         
-        
         if  final_epoch:
             torch.save(chkpt, "{}/{}_final.pt".format(wdir,opt.net))
 
         del chkpt
-
-        # end epoch ----------------------------------------------------------------------------------------------------
-    # end training
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=250)  
-    parser.add_argument('--batch-size', type=int, default=8)  # effective bs = batch_size * accumulate = 16 * 4 = 64
-    parser.add_argument('--net', type=str, default='darknet53', help='net')
+    parser.add_argument('--batch-size', type=int, default=16) 
+    parser.add_argument('--net', type=str, default='mbv2_1', help='net')
     parser.add_argument('--train_path', type=str, default='/home/sefa/data/widerface/train/yololandmark_wider_train/', help='*.txt path')
     # parser.add_argument('--train_path', type=str, default='./data/wider_landmark98_yolo_train.txt', help='*.txt path')
     parser.add_argument('--multi-scale', action='store_true', help='adjust (67%% - 150%%) img_size every 10 batches')
@@ -349,7 +286,7 @@ if __name__ == '__main__':
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
-    parser.add_argument('--weights', type=str, default='../weights/mbv2_1_last', help='initial weights path')
+    parser.add_argument('--weights', type=str, default='../weights/mbv2_1_best', help='initial weights path')
     parser.add_argument('--backbone_weights', type=str, default='../pretrained/mobilenetv3-small-0.75-86c972c3.pth', help='initial backbone_weights path')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
     parser.add_argument('--device', default='0', help='device id (i.e. 0 or 0,1 or cpu)')
@@ -362,21 +299,17 @@ if __name__ == '__main__':
     last = wdir + '/{}_last.pt'.format(opt.net)
     opt.weights = last if opt.resume else opt.weights
     check_git_status()
-
     
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
     device = torch_utils.select_device(opt.device, batch_size=opt.batch_size)
     if device.type == 'cpu':
         mixed_precision = False
 
-    # scale hyp['obj'] by img_size (evolved at 320)
-    # hyp['obj'] *= opt.img_size[0] / 320.
-
     tb_writer = None
     
     print(opt)
     print('Start Tensorboard with "tensorboard --logdir=runs", view at http://localhost:6006/')
     tb_writer = SummaryWriter(comment=opt.name)
-    train(hyp)  # train normally
+    train(hyp)  
 
 

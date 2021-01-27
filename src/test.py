@@ -201,6 +201,6 @@ if __name__ == '__main__':
     device = select_device('0')
     
     net = get_model(net_type, weights, device)
-#    save_widerface_predictions(net, val_image_root, val_results_root)
+    save_widerface_predictions(net, val_image_root, val_results_root)
     
     save_wflw_predictions(net, val_labels_path, val_image_root, val_results_root)

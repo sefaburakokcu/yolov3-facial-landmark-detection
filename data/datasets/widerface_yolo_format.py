@@ -80,8 +80,8 @@ def save_widerface_yolo(words, imgs_path, save_labels_folder):
                 
                 
 if __name__ == '__main__':
-    input_labels_path = "/home/sefa/data/widerface/train/label.txt"
-    save_labels_folder = "/home/sefa/data/widerface/train/yololandmark_wider_train/"
+    input_labels_path = "./widerface/train/label.txt"
+    save_labels_folder = "./widerface/train/yololandmark_wider_train/"
     
     if not os.path.exists(save_labels_folder):
         os.makedirs(save_labels_folder)

@@ -45,7 +45,7 @@ python inference.py
 
 ## Tests
 
-1. In order to evaluate the models, first download Widerface Validation dataset from [Widerface website](http://shuoyang1213.me/WIDERFACE/) and WFLW dataset from [website](https://wywu.github.io/projects/LAB/WFLW.html) or [Google drive](https://wywu.github.io/projects/LAB/WFLW.html). 
+1. In order to evaluate the models, first download Widerface Validation dataset from [Widerface Website](http://shuoyang1213.me/WIDERFACE/) and WFLW dataset from [WFLW Website](https://wywu.github.io/projects/LAB/WFLW.html) or [Google drive](https://drive.google.com/file/d/1dtFIHkMc9H-9NjbRvqSsbc0bzDFlkdia/view?usp=sharing). 
 
 2. Then, under *src* run,
 
@@ -69,9 +69,30 @@ for facial landmarks extraction performance.
 
 ### Face Detection
 
+Evaluation of models on Widerface Validation dataset for face detection is indicated below.
+Average Precision is used as a performance metric.
+
+| Models  | Easy | Medium | Hard |
+| ------------- | ------------- | ------------- | ------------- |
+| Mobilenetv2(0.75)[  | 0.85 | 0.83  | 0.63 |
+| Mobilenetv2(1.0)  | 0.87  | 0.86  | 0.69  |
+| Retinaface(Mobilenetv2(0.25))  | 0.90  | 0.87  | 0.67 |
+| Retinaface(Resnet50)  | 0.93  | 0.91  | 0.69 |
+| MTCNN  | 0.79  | 0.76  | 0.50  |
+
 
 ### Facial Landmarks Extraction
 
+Evaluation of models on WFLW dataset for facial landmarks extraction is shown below.
+Average Root Mean Square Error(RMSE) is chosen as a performance metric.
+
+| Models  | RMSE |
+| ------------- | ------------- |
+| Mobilenetv2(0.75)[  | 6.53 |
+| Mobilenetv2(1.0)  | 4.36  | 
+| Retinaface(Mobilenetv2(0.25))  | 4.03  | 
+| Retinaface(Resnet50)  | 0.93  | 3.22  |
+| MTCNN  | 4.5  |
 
 
 ## References

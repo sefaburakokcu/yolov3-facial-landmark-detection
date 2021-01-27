@@ -193,14 +193,18 @@ def save_wflw_predictions(net, val_labels_path, val_image_root, val_results_root
 if __name__ == '__main__':
     net_type = "mbv2_1"
     weights = f"../weights/{net_type}_best.pt"
-    
-    val_image_root = "/home/sefa/Downloads/WFLW_images/"
-    val_results_root = f"../outputs/wlfw_results/{net_type}/"
-    val_labels_path = "/home/sefa/Downloads/WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt"
+
+    widerface_val_image_root = "../data/datasets/widerface/images/"
+    widerface_val_results_root = f"../outputs/widerface_results/{net_type}/"
+
+
+    wflw_val_image_root = "../data/datasets/wflw/wflw_images/"
+    vwflw_al_results_root = f"../outputs/wlfw_results/{net_type}/"
+    wflw_val_labels_path = "../data/datasets/wflw/list_98pt_rect_attr_train.txt"
     
     device = select_device('0')
     
     net = get_model(net_type, weights, device)
-    save_widerface_predictions(net, val_image_root, val_results_root)
+    save_widerface_predictions(net, widerface_val_image_root, widerface_val_results_root)
     
-    save_wflw_predictions(net, val_labels_path, val_image_root, val_results_root)
+    save_wflw_predictions(net, wflw_val_labels_path, wflw_val_image_root, wflw_val_results_root)

@@ -77,7 +77,7 @@ def run_inference():
         pred = model(img)[0]
     
         pred = non_max_suppression(pred,opt.conf_thres, 0.35,
-                                   multi_label=False, classes=0, agnostic= False,land=True ,point_num=point_num)
+                                   multi_label=False, classes=0, agnostic= False, land=True, point_num=point_num)
       
         t2 = time_synchronized()
         
@@ -96,7 +96,8 @@ def run_inference():
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-                det[:, 5:5+point_num*2] = scale_coords(img.shape[2:], det[:, 5:5+point_num*2], im0.shape).round()
+                if point_num > 0:
+                    det[:, 5:5+point_num*2] = scale_coords(img.shape[2:], det[:, 5:5+point_num*2], im0.shape).round()
                 
                 # Print results
                 for c in det[:, -1].unique():
@@ -104,11 +105,17 @@ def run_inference():
                     s += f'{n} {names[int(c)]}s, '  # add to string
     
                 # Save and show results
-                for (*xyxy, conf), (*xyxyxyxyxy,cls) in zip(reversed(det[:, :5]), reversed(det[:, 5:])):
+                if point_num > 0:
+                    for (*xyxy, conf), (*xyxyxyxyxy,cls) in zip(reversed(det[:, :5]), reversed(det[:, 5:])):
+                        if opt.save_img or opt.view_img:  # Add bbox to image
+                            label = f'{names[int(cls)]} {conf:.2f}'
+                            plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+                            plot_one_landmarks(xyxyxyxyxy, im0)
+                else:
+                    for *xyxy, conf, cls in det:
                     if opt.save_img or opt.view_img:  # Add bbox to image
                         label = f'{names[int(cls)]} {conf:.2f}'
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
-                        plot_one_landmarks(xyxyxyxyxy, im0)
                         
             # Print time (inference + NMS)
             print(f'{s}Done. ({t2 - t1:.3f}s)')

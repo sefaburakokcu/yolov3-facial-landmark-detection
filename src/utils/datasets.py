@@ -40,7 +40,7 @@ def exif_size(img):
 
 class LoadImagesAndLabels(Dataset):  # for training/testing
     def __init__(self, path, img_size=416, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
-                 cache_images=False, single_cls=False, point_number = 5 ,flip_idx_pair = [[0,1],[3,4]]):
+                 cache_images=False, single_cls=False, point_number=5 ,flip_idx_pair=[[0,1],[3,4]]):
         try:
             path = str(Path(path))  # os-agnostic
             if os.path.isfile(path):  # file
@@ -127,13 +127,13 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             else:
                 try:
                     with open(file, 'r') as f:
-                        l = np.array([x.split() for x in f.read().splitlines()], dtype=np.float32)
+                        l = np.array([x.split()[:5+point_number*2] for x in f.read().splitlines()], dtype=np.float32)
                 except:
                     nm += 1  # print('missing labels for image %s' % self.img_files[i])  # file missing
                     continue
 
             if l.shape[0]:
-                # print(l.shape)
+                # print(l.shape[1])
                 assert l.shape[1] == 5 + 2 * point_number, '> 5 label columns: %s' % file
                 l[:,1:5][l[:,1:5]<0] =0
                 l[:,1:5][l[:,1:5]>1] =1
@@ -209,12 +209,6 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
     def __len__(self):
         return len(self.img_files)
-
-    # def __iter__(self):
-    #     self.count = -1
-    #     print('ran dataset iter')
-    #     #self.shuffled_vector = np.random.permutation(self.nF) if self.augment else np.arange(self.nF)
-    #     return self
 
     def __getitem__(self, index):
         if self.image_weights:
@@ -293,18 +287,19 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 img = np.fliplr(img)
                 if nL:
                     labels[:, 1] = 1 - labels[:, 1]
-                    point_xy = labels[:, 5:5+self.point_number*2].copy()
-                    no_tran_index = np.where(point_xy == -1)
-                    point_xy = point_xy.reshape([-1, self.point_number, 2])
-                    point_xy[:, :, 0] = 1 - point_xy[:, :, 0]
-                    for pair in self.flip_idx_pair:
-                        id1, id2 = pair
-                        tmp = point_xy[:, id2, :].copy()
-                        point_xy[:, id2, :] = point_xy[:, id1, :]
-                        point_xy[:, id1, :] = tmp
-                    point_xy = point_xy.reshape([-1, self.point_number * 2])
-                    point_xy[no_tran_index] = -1
-                    labels[:, 5:5 + self.point_number * 2] = point_xy
+                    if self.point_number > 0:
+                        point_xy = labels[:, 5:5+self.point_number*2].copy()
+                        no_tran_index = np.where(point_xy == -1)
+                        point_xy = point_xy.reshape([-1, self.point_number, 2])
+                        point_xy[:, :, 0] = 1 - point_xy[:, :, 0]
+                        for pair in self.flip_idx_pair:
+                            id1, id2 = pair
+                            tmp = point_xy[:, id2, :].copy()
+                            point_xy[:, id2, :] = point_xy[:, id1, :]
+                            point_xy[:, id1, :] = tmp
+                        point_xy = point_xy.reshape([-1, self.point_number * 2])
+                        point_xy[no_tran_index] = -1
+                        labels[:, 5:5 + self.point_number * 2] = point_xy
 
             # random up-down flip
             # ud_flip = False

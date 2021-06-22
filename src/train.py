@@ -178,8 +178,11 @@ def train(hyp):
     print('Starting training for %g epochs...' % epochs)
     for epoch in range(start_epoch, epochs): 
         model.train()
-
-        mloss = torch.zeros(5).to(device)  # mean losses
+        
+        if hyp['point_num'] > 0:
+            mloss = torch.zeros(5).to(device)  # mean losses
+        else:
+            mloss = torch.zeros(4).to(device)  # mean losses
         print(('\n' + '%10s' * 10) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls','land' , 'total', 'targets', 'img_size','lr'))
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _) in pbar:  
@@ -213,7 +216,7 @@ def train(hyp):
             pred = model(imgs)
 
             # Loss
-            loss, loss_items = compute_loss(pred, targets, model,point_number=hyp['point_num'])
+            loss, loss_items = compute_loss(pred, targets, model, point_number=hyp['point_num'])
             if not torch.isfinite(loss):
                 print('WARNING: non-finite loss, ending training ', loss_items)
                 return results
@@ -233,7 +236,7 @@ def train(hyp):
             mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
             mem = '%.3gG' % (torch.cuda.memory_cached() / 1E9 if torch.cuda.is_available() else 0)  # (GB)
 
-            s = ('%10s' * 2 + '%10.3g' * 7 + "%10.5g") % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size,scheduler.get_lr()[0])
+            s = ('%10s' * 2 + '%10.3g' * (6 + (hyp['point_num'] > 0)) + "%10.5g") % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size,scheduler.get_lr()[0])
             pbar.set_description(s)
 
         # Update scheduler
@@ -273,9 +276,9 @@ def train(hyp):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=250)  
-    parser.add_argument('--batch-size', type=int, default=16) 
+    parser.add_argument('--batch-size', type=int, default=4) 
     parser.add_argument('--net', type=str, default='mbv2_1', help='net')
-    parser.add_argument('--train_path', type=str, default='/home/sefa/data/widerface/train/yololandmark_wider_train/', help='*.txt path')
+    parser.add_argument('--train_path', type=str, default='/home/sefa/Downloads/yololandmark_wider_train/', help='*.txt path')
     # parser.add_argument('--train_path', type=str, default='./data/wider_landmark98_yolo_train.txt', help='*.txt path')
     parser.add_argument('--multi-scale', action='store_true', help='adjust (67%% - 150%%) img_size every 10 batches')
     parser.add_argument('--img-size', nargs='+', type=int, default=[320, 640], help='[min_train, max-train, test]')
@@ -289,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument('--weights', type=str, default='../weights/mbv2_1_best', help='initial weights path')
     parser.add_argument('--backbone_weights', type=str, default='../pretrained/mobilenetv3-small-0.75-86c972c3.pth', help='initial backbone_weights path')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
-    parser.add_argument('--device', default='0', help='device id (i.e. 0 or 0,1 or cpu)')
+    parser.add_argument('--device', default='cpu', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
     opt = parser.parse_args()

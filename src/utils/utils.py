@@ -232,10 +232,10 @@ class WingLoss(nn.Module):
         return y.sum()
 
 
-def compute_loss(p, targets, model,point_number=0):  # predictions, targets, models
+def compute_loss(p, targets, model, point_number=0):  # predictions, targets, models
     ft = torch.cuda.FloatTensor if p[0].is_cuda else torch.Tensor
     lcls, lbox, lobj, lpoint = ft([0]), ft([0]), ft([0]) ,ft([0])
-    tcls, tbox, tpoint ,indices, anchors = build_targets(p, targets, model,point_number=point_number)  # targets
+    tcls, tbox, tpoint, indices, anchors = build_targets(p, targets, model, point_number=point_number)  # targets
     h = model.hyp  # hyperparameters
     red = 'mean'  # Loss reduction (sum or mean)
 
@@ -265,10 +265,11 @@ def compute_loss(p, targets, model,point_number=0):  # predictions, targets, mod
             ps = pi[b, a, gj, gi]  # prediction subset corresponding to targets
 
             # point
-            pland = torch.zeros_like(ps[:, 4:4 + point_number * 2])
-            for la_num in range(point_number):
-                pland[:, la_num * 2:la_num * 2 + 2] = ps[:, 4 + la_num * 2:4 + la_num * 2 + 2] * anchors[i]
-            lpoint += Point_cir(pland, tpoint[i])
+            if point_number > 0:
+                pland = torch.zeros_like(ps[:, 4:4 + point_number * 2])
+                for la_num in range(point_number):
+                    pland[:, la_num * 2:la_num * 2 + 2] = ps[:, 4 + la_num * 2:4 + la_num * 2 + 2] * anchors[i]
+                lpoint += Point_cir(pland, tpoint[i])
 
 
             # GIoU
@@ -291,24 +292,15 @@ def compute_loss(p, targets, model,point_number=0):  # predictions, targets, mod
                 t[range(nb), tcls[i]] = cp
                 lcls += BCEcls(ps[:, 5 + point_number * 2:] , t )  # BCE
 
-
-
-
-
-            # Append targets to text file
-            # with open('targets.txt', 'a') as file:
-            #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
-
-
-
-
         lobj += BCEobj(pi[..., 4 + point_number*2 ]  , tobj )  # obj loss
 
 
     lbox *= h['giou']
     lobj *= h['obj']
     lcls *= h['cls']
-    lpoint *= h['land']
+    if point_number > 0:
+        lpoint *= h['land']
+        
     if red == 'sum':
         bs = tobj.shape[0]  # batch size
         g = 3.0  # loss gain
@@ -316,13 +308,17 @@ def compute_loss(p, targets, model,point_number=0):  # predictions, targets, mod
         if nt:
             lcls *= g / nt / model.nc
             lbox *= g / nt
-            lpoint *= g / nt
+            if point_number > 0:
+                lpoint *= g / nt
+    if point_number > 0:
+        loss = lbox + lobj + lcls + lpoint
+        return loss, torch.cat((lbox, lobj, lcls, lpoint, loss)).detach()
+    else:
+        loss = lbox + lobj + lcls
+        return loss, torch.cat((lbox, lobj, lcls, loss)).detach()
 
-    loss = lbox + lobj + lcls + lpoint
-    return loss, torch.cat((lbox, lobj, lcls,lpoint, loss)).detach()
 
-
-def build_targets(p, targets, model , point_number = 0 ):
+def build_targets(p, targets, model , point_number=0):
     # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
     nt = targets.shape[0]
     tcls, tbox, indices, anch , tpoint   = [], [], [], [] ,[]
@@ -369,12 +365,17 @@ def build_targets(p, targets, model , point_number = 0 ):
         gxy = t[:, 2:4]  # grid xy
         gwh = t[:, 4:6]  # grid wh
         gij = (gxy - offsets).long()
-        gpoint = t[:,6:6+point_number*2]
-        no_train_index = torch.where(gpoint == -1)
+        if point_number > 0:
+            gpoint = t[:,6:6+point_number*2]
+            
+            no_train_index = torch.where(gpoint == -1)
 
-        for p_n in range(point_number):
-            gpoint[:,2*p_n:2*p_n+2] -=  gij
-        gpoint[no_train_index] = -1
+            for p_n in range(point_number):
+                gpoint[:,2*p_n:2*p_n+2] -=  gij
+            gpoint[no_train_index] = -1
+            
+            tpoint.append(gpoint)
+            
         gi, gj = gij.T  # grid xy indices
 
         # Append
@@ -383,15 +384,13 @@ def build_targets(p, targets, model , point_number = 0 ):
 
 
         tbox.append(torch.cat((gxy - gij, gwh), 1))  # box
-        tpoint.append(gpoint)
         anch.append(anchors[a])  # anchors
         tcls.append(c)  # class
 
+    return tcls, tbox, tpoint, indices, anch
 
-    return tcls, tbox,tpoint, indices, anch
 
-
-def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, multi_label=True, classes=None, agnostic=False,land = False ,point_num = 0 ):
+def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, multi_label=True, classes=None, agnostic=False, land = False, point_num = 0 ):
     """
     Performs  Non-Maximum Suppression on inference results
     Returns detections with shape:
@@ -402,7 +401,8 @@ def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, multi_label=T
     merge = True  # merge for best mAP
     min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
     time_limit = 10.0  # seconds to quit after
-
+    land = False if not (point_number > 0) else land
+    
     t = time.time()
     nc = prediction[0].shape[1] - (5 + point_num * 2)   # number of classes
     multi_label &= nc > 1  # multiple labels per box

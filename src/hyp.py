@@ -18,7 +18,7 @@ hyp = {'nc' : 1 , # class number
        'translate': 0.1 ,  # image translation (+/- fraction)
        'scale': (0.5,3.0) ,  # image scale (+/- gain)
        'shear': 10  ,
-       'point_num' : 5 ,
+       'point_num' : 5,
        'out_channels':64,
        'anchors': [[[12,12], [20,20], [32,32] ],
                    [ [48,48],[72,72], [128,128]],

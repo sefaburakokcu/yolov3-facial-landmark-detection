@@ -181,9 +181,11 @@ def train(hyp):
         
         if hyp['point_num'] > 0:
             mloss = torch.zeros(5).to(device)  # mean losses
+            print(('\n' + '%10s' * 10) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'land', 'total', 'targets', 'img_size','lr'))
         else:
             mloss = torch.zeros(4).to(device)  # mean losses
-        print(('\n' + '%10s' * 10) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls','land' , 'total', 'targets', 'img_size','lr'))
+            print(('\n' + '%10s' * 9) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'targets', 'img_size','lr'))
+
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _) in pbar:  
             ni = i + nb * epoch  # number integrated batches (since train start)
@@ -276,9 +278,9 @@ def train(hyp):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=250)  
-    parser.add_argument('--batch-size', type=int, default=4) 
-    parser.add_argument('--net', type=str, default='mbv2_1', help='net')
-    parser.add_argument('--train_path', type=str, default='/home/sefa/Downloads/yololandmark_wider_train/', help='*.txt path')
+    parser.add_argument('--batch-size', type=int, default=8) 
+    parser.add_argument('--net', type=str, default='mbv2_75', help='net')
+    parser.add_argument('--train_path', type=str, default='/home/sefa/data/widerface/train/widerface_train_yolo/', help='*.txt path')
     # parser.add_argument('--train_path', type=str, default='./data/wider_landmark98_yolo_train.txt', help='*.txt path')
     parser.add_argument('--multi-scale', action='store_true', help='adjust (67%% - 150%%) img_size every 10 batches')
     parser.add_argument('--img-size', nargs='+', type=int, default=[320, 640], help='[min_train, max-train, test]')
@@ -292,13 +294,15 @@ if __name__ == '__main__':
     parser.add_argument('--weights', type=str, default='../weights/mbv2_1_best', help='initial weights path')
     parser.add_argument('--backbone_weights', type=str, default='../pretrained/mobilenetv3-small-0.75-86c972c3.pth', help='initial backbone_weights path')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
-    parser.add_argument('--device', default='cpu', help='device id (i.e. 0 or 0,1 or cpu)')
+    parser.add_argument('--device', default='0', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
     opt = parser.parse_args()
     
     wdir = "/".join((opt.weights).split("/")[:-1])
-    
+    if not os.path.exists(wdir):
+        os.mkdir(wdir)
+
     last = wdir + '/{}_last.pt'.format(opt.net)
     opt.weights = last if opt.resume else opt.weights
     check_git_status()

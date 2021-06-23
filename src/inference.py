@@ -80,7 +80,7 @@ def run_inference():
                                    multi_label=False, classes=0, agnostic= False, land=True, point_num=point_num)
       
         t2 = time_synchronized()
-        
+        print(pred)
             # Process detections
         for i, det in enumerate(pred):  # detections per image
             if webcam:  # batch_size >= 1
@@ -93,7 +93,7 @@ def run_inference():
             
             s += '%gx%g ' % img.shape[2:]  # print string
            
-            if len(det):
+            if (det is not None) and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
                 if point_num > 0:
@@ -113,9 +113,9 @@ def run_inference():
                             plot_one_landmarks(xyxyxyxyxy, im0)
                 else:
                     for *xyxy, conf, cls in det:
-                    if opt.save_img or opt.view_img:  # Add bbox to image
-                        label = f'{names[int(cls)]} {conf:.2f}'
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+                        if opt.save_img or opt.view_img:  # Add bbox to image
+                            label = f'{names[int(cls)]} {conf:.2f}'
+                            plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
                         
             # Print time (inference + NMS)
             print(f'{s}Done. ({t2 - t1:.3f}s)')

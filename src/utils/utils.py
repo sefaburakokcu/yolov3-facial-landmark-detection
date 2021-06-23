@@ -401,7 +401,7 @@ def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, multi_label=T
     merge = True  # merge for best mAP
     min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
     time_limit = 10.0  # seconds to quit after
-    land = False if not (point_number > 0) else land
+    land = False if not (point_num > 0) else land
     
     t = time.time()
     nc = prediction[0].shape[1] - (5 + point_num * 2)   # number of classes
